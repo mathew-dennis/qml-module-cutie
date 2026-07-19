@@ -9,7 +9,7 @@ Slider {
     rightPadding: 10
     topPadding: 5
     bottomPadding: 5
-
+   height: 40
     background: Rectangle {
         x: 25
         y: 25
