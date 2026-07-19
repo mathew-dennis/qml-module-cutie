@@ -18,8 +18,8 @@ Slider {
     property real handleY: orientation === Qt.Horizontal ? topPadding + 5 : topPadding + (visualPosition) * (availableHeight - 20)
 
     background: Rectangle {
-        x: root.orientation === Qt.Horizontal ? 25 : root.availableWidth / 2 - 1.5
-        y: root.orientation === Qt.Horizontal ? 19 : root.topPadding
+        x: root.orientation === Qt.Horizontal ? 25 : 19
+        y: root.orientation === Qt.Horizontal ? 19 : 25
         width: root.backgroundWidth
         height: root.backgroundHeight
         radius: (root.orientation === Qt.Horizontal ? height : width) / 2
