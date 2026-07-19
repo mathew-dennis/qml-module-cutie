@@ -15,7 +15,7 @@ Slider {
     property real backgroundWidth: orientation === Qt.Horizontal ? availableWidth - rightPadding - leftPadding : 3
     property real backgroundHeight: orientation === Qt.Horizontal ? 3 : availableHeight - topPadding - bottomPadding
     property real handleX: orientation === Qt.Horizontal ? leftPadding + visualPosition * (availableWidth - 20) : (availableWidth - 20) / 2
-    property real handleY: orientation === Qt.Horizontal ? topPadding + 5 : topPadding + (1 - visualPosition) * (availableHeight - 20)
+    property real handleY: orientation === Qt.Horizontal ? topPadding + 5 : topPadding + (visualPosition) * (availableHeight - 20)
 
     background: Rectangle {
         x: root.orientation === Qt.Horizontal ? 25 : root.availableWidth / 2 - 1.5
