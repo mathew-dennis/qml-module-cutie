@@ -10,6 +10,7 @@ Inherits: QtQuick.Controls 2.15 Button
 
 - [subText](#subtext): string
 - [iconOverlay](#iconoverlay): bool
+- [wrapText](#wraptext): bool
 - [menu](#menu): [CutieMenu](menu)
 
 ## Detailed Description
@@ -29,6 +30,12 @@ An optional text shown below the actual text in `text` property. By default, thi
 bool
 
 If true, filters the icon to be colored black or white depending on the atmosphere variant. By default, this is set to true.
+
+#### wrapText
+
+bool
+
+If true, `text` and `subText` wrap onto multiple lines. If false, they are truncated to a single line with an ellipsis instead. By default, this is set to true.
 
 #### menu
 

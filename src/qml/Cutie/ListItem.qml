@@ -10,6 +10,7 @@ Button {
 	width: parent.width
 	property string subText: ""
 	property bool iconOverlay: true
+	property bool wrapText: true
 	property CutieMenu menu
 	padding: 15
 	bottomPadding: 10
@@ -99,7 +100,9 @@ Button {
 				text: root.text
 				font.pixelSize: 15
         		Layout.fillWidth: true
-				wrapMode: Text.Wrap
+				wrapMode: root.wrapText ? Text.Wrap : Text.NoWrap
+				elide: root.wrapText ? Text.ElideNone : Text.ElideRight
+				maximumLineCount: root.wrapText ? -1 : 1
 			}
 			CutieLabel {
 				id: subTextItem
@@ -107,7 +110,9 @@ Button {
 				visible: root.subText !== ""
 				font.pixelSize: 10
         		Layout.fillWidth: true
-				wrapMode: Text.Wrap
+				wrapMode: root.wrapText ? Text.Wrap : Text.NoWrap
+				elide: root.wrapText ? Text.ElideNone : Text.ElideRight
+				maximumLineCount: root.wrapText ? -1 : 1
 			}
 		}
 	}
