@@ -7,8 +7,8 @@ Slider {
 
     leftPadding: 10
     rightPadding: 10
-    topPadding: 5
-    bottomPadding: 5
+    topPadding: 10
+    bottomPadding: 10
     implicitWidth: orientation === Qt.Horizontal ? 200 : 40
     implicitHeight: orientation === Qt.Horizontal ? 40 : 200
 
