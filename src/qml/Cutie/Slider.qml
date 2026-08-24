@@ -20,8 +20,8 @@ Slider {
     property real handleY: isHorizontal ? topPadding + 5 : topPadding + (visualPosition) * (availableHeight - 20)
 
     background: Rectangle {
-        x: root.isHorizontal ? 25 : 19
-        y: root.isHorizontal ? 19 : 25
+        x: handleX
+        y: handleY
         width: root.backgroundWidth
         height: root.backgroundHeight
         radius: 20
