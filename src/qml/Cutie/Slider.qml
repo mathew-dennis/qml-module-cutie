@@ -9,20 +9,28 @@ Slider {
     rightPadding: 10
     topPadding: 5
     bottomPadding: 5
-    height: 40
+    implicitWidth: isHorizontal ? 200 : 40
+    implicitHeight: isHorizontal ? 40 : 200
+    
+    readonly property bool isHorizontal: orientation === Qt.Horizontal
+
+    property real backgroundWidth: isHorizontal ? availableWidth - rightPadding - leftPadding : 3
+    property real backgroundHeight: isHorizontal ? 3 : availableHeight - topPadding - bottomPadding
+    property real handleX: isHorizontal ? leftPadding + visualPosition * (availableWidth - 20) : topPadding + 5
+    property real handleY: isHorizontal ? topPadding + 5 : topPadding + (visualPosition) * (availableHeight - 20)
 
     background: Rectangle {
-        x: 25
-        y: 19
-        height: 3
-        width: root.availableWidth - root.rightPadding - root.leftPadding
-        radius: height / 2
+        x: root.isHorizontal ? 25 : 19
+        y: root.isHorizontal ? 19 : 10
+        width: root.backgroundWidth
+        height: root.backgroundHeight
+        radius: 20
         color: Atmosphere.primaryAlphaColor
     }
 
     handle: Rectangle {
-        x: root.leftPadding + root.visualPosition * (root.availableWidth - width)
-        y: root.topPadding + 5
+        x: root.handleX
+        y: root.handleY
         width: 20
         height: 20
         radius: width / 2
