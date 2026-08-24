@@ -21,7 +21,7 @@ Slider {
 
     background: Rectangle {
         x: root.isHorizontal ? 25 : 19
-        y: root.isHorizontal ? 19 : 0
+        y: root.isHorizontal ? 19 : 20
         width: root.backgroundWidth
         height: root.backgroundHeight
         radius: 20
