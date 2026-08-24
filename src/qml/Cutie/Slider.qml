@@ -9,9 +9,9 @@ Slider {
     rightPadding: 10
     topPadding: 5
     bottomPadding: 5
-    implicitWidth: isHorizontal: ? 200 : 40
-    implicitHeight: isHorizontal: ? 40 : 200
-
+    implicitWidth: isHorizontal ? 200 : 40
+    implicitHeight: isHorizontal ? 40 : 200
+    
     readonly property bool isHorizontal: orientation === Qt.Horizontal
 
     property real backgroundWidth: isHorizontal ? availableWidth - rightPadding - leftPadding : 3
