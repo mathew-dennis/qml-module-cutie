@@ -17,7 +17,7 @@ Slider {
     property real backgroundWidth: isHorizontal ? availableWidth - rightPadding - leftPadding : 3
     property real backgroundHeight: isHorizontal ? 3 : availableHeight - topPadding - bottomPadding
     property real handleX: isHorizontal ? leftPadding + visualPosition * (availableWidth - 20) : topPadding + 5
-    property real handleY: isHorizontal ? topPadding + 5 : topPadding + (1 - visualPosition) * (availableHeight - 20)
+    property real handleY: isHorizontal ? topPadding + 5 : topPadding + (visualPosition) * (availableHeight - 20)
 
     background: Rectangle {
         x: root.isHorizontal ? 25 : 19
