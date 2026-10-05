@@ -2,6 +2,7 @@
 
 void CutiePlugin::registerTypes(const char *uri)
 {
+	initBackgroundBlur();
 	qmlRegisterSingletonType<AtmosphereModel>(uri, 1, 0, "Atmosphere",
 						  &AtmosphereModel::provider);
 }
