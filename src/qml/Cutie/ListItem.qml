@@ -10,8 +10,6 @@ Button {
 	width: parent.width
 	property string subText: ""
 	property bool iconOverlay: true
-	property int itemIconWidth: root.icon.width > 0 ? root.icon.width : (iconImage.status == Image.Ready ? iconImage.width : 0)
-	property int itemIconHeight: root.icon.height > 0 ? root.icon.height : (iconImage.status == Image.Ready ? iconImage.height : 0)
     
 	property int wrapMode: Text.Wrap
 	property int elide: Text.ElideNone
@@ -60,9 +58,9 @@ Button {
 		height: Math.max(iconItem.height, textCol.height)
 		Item {
 			id: iconItem
-			Layout.preferredWidth: root.itemIconWidth
-			width: root.itemIconWidth
-			height: root.itemIconHeight
+			Layout.preferredWidth: iconImage.status == Image.Ready ? iconImage.width : 0
+			width: iconImage.status == Image.Ready ? iconImage.width : 0
+			height: iconImage.status == Image.Ready ? iconImage.height : 0
 			Image {
 				id: iconImage
 				width: root.icon.width
@@ -80,7 +78,7 @@ Button {
                         source = root.icon.source;
                     }
 
-	                    if (status == Image.Ready && (root.icon.width <= 0 || root.icon.height <= 0)) {
+                    if (status == Image.Ready) {
                         height = root.height - 10;
                         width = height * root.icon.width / root.icon.height;
                     }
