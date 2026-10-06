@@ -58,6 +58,7 @@ Button {
 		height: Math.max(iconItem.height, textCol.height)
 		Item {
 			id: iconItem
+			Layout.preferredWidth: iconImage.status == Image.Ready ? iconImage.width : 0
 			width: iconImage.status == Image.Ready ? iconImage.width : 0
 			height: iconImage.status == Image.Ready ? iconImage.height : 0
 			Image {
