@@ -60,7 +60,6 @@ Button {
 		height: Math.max(iconItem.height, textCol.height)
 		Item {
 			id: iconItem
-			Layout.preferredWidth: root.itemIconWidth
 			width: root.itemIconWidth
 			height: root.itemIconHeight
 			Image {
@@ -80,7 +79,7 @@ Button {
                         source = root.icon.source;
                     }
 
-	                    if (status == Image.Ready && (root.icon.width <= 0 || root.icon.height <= 0)) {
+	                    if (status == Image.Ready)) {
                         height = root.height - 10;
                         width = height * root.icon.width / root.icon.height;
                     }
