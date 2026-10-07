@@ -79,7 +79,7 @@ Button {
                         source = root.icon.source;
                     }
 
-	                    if (status == Image.Ready)) {
+	                    if (status == Image.Ready) {
                         height = root.height - 10;
                         width = height * root.icon.width / root.icon.height;
                     }
