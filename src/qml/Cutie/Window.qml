@@ -4,7 +4,11 @@ import Cutie
 
 Window {
     visible: true
-    color: "transparent"
+    readonly property bool isFullScreen: visibility === Window.FullScreen
+    readonly property bool isMaximized: visibility === Window.Maximized
+    readonly property bool isWindowed: visibility === Window.Windowed
+
+    color: isFullScreen ? "transparent" : "white"
 
     property Item initialPage: null
     readonly property CutiePageStack pageStack: _pageStack
