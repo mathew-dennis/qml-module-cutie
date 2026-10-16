@@ -8,12 +8,13 @@ Window {
     readonly property bool isMaximized: visibility === Window.Maximized
     readonly property bool isWindowed: visibility === Window.Windowed
 
-    color: isFullScreen ? "transparent" : "white"
+    color: isWindowed ?  "white" : "transparent" 
 
     property Item initialPage: null
     readonly property CutiePageStack pageStack: _pageStack
 
     Component.onCompleted: {
+        console.log("Initial window visibility state:", visibility
         _pageStack.push(initialPage)
     }
 
