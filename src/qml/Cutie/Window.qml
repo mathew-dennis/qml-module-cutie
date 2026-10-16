@@ -14,7 +14,7 @@ Window {
     readonly property CutiePageStack pageStack: _pageStack
 
     Component.onCompleted: {
-        console.log("Initial window visibility state:", visibility
+        console.log("Initial window visibility state:", visibility)
         _pageStack.push(initialPage)
     }
 
