@@ -8,7 +8,7 @@ Window {
     readonly property bool isMaximized: visibility === Window.Maximized
     readonly property bool isWindowed: visibility === Window.Windowed
 
-    color: isWindowed ?  "white" : "transparent" 
+    color: isWindowed ?  "black" : "transparent" 
 
     property Item initialPage: null
     readonly property CutiePageStack pageStack: _pageStack
