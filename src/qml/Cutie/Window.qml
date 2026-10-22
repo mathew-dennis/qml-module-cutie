@@ -74,6 +74,7 @@ Window {
     CutiePageStack {
         id: _pageStack
         anchors.fill: parent
+        clip: true   // keep the neighbouring page from drawing over the sidebar
         anchors.leftMargin: wideLayout ? _sidebar.width + 1 : 0
     }
 }
