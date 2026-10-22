@@ -32,7 +32,10 @@ SwipeView {
     readonly property Item currentPage: currentItem
     readonly property int depth: count
     
-    function clear() { contentChildren.clear() }
+    function clear() {
+        removeTimer.stop();
+        while (count > 0) takeItem(count - 1).destroy();
+    }
     function push(page, properties) {
         if (removeTimer.running) {
             removeTimer.stop();
