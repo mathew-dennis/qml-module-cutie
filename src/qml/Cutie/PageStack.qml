@@ -63,7 +63,7 @@ SwipeView {
     }
 
     function replaceTop(page, properties) {
-        takeItem(count - 1).destroy();
+        if (count > 0) takeItem(count - 1).destroy();
         push(page, properties);
     }
 
@@ -74,6 +74,7 @@ SwipeView {
     }
 
     function pop(page) {
+        if (count === 0) return;
         if (page) {
             let i = 0;
 	        for (; itemAt(i) !== page; i++);
