@@ -38,8 +38,10 @@ Window {
             initialPage.width = Qt.binding(() => _sidebar.width)
             initialPage.height = Qt.binding(() => _sidebar.height)
         }
-        else if (!wideLayout && _sidebar.count > 0)
+        else if (!wideLayout && _sidebar.count > 0) {
+            _pageStack.clear()   // drop the detail history, compact starts at the root page
             _pageStack.insertItem(0, _sidebar.takeItem(0))
+        }
     }
 
     property CutieToastHandler toastHandler: toastHandler
