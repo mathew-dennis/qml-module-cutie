@@ -32,8 +32,12 @@ Window {
     // Only the root page changes pane: left of the divider when wide,
     // index 0 of the stack when compact.
     function _syncRootPage() {
-        if (wideLayout && _pageStack.itemAt(0) === initialPage)
+        if (wideLayout && _pageStack.itemAt(0) === initialPage) {
             _sidebar.addItem(_pageStack.takeItem(0))
+            // apps may bind the root page's size to the window; pin it to the sidebar
+            initialPage.width = Qt.binding(() => _sidebar.width)
+            initialPage.height = Qt.binding(() => _sidebar.height)
+        }
         else if (!wideLayout && _sidebar.count > 0)
             _pageStack.insertItem(0, _sidebar.takeItem(0))
     }
