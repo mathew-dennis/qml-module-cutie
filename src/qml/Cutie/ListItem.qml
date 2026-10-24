@@ -10,8 +10,8 @@ Button {
 	width: parent.width
 	property string subText: ""
 	property bool iconOverlay: true
-	property int itemIconWidth: root.icon.width > 0 ? root.icon.width : (iconImage && iconImage.status == Image.Ready ? iconImage.width : 0)
-	property int itemIconHeight: root.icon.height > 0 ? root.icon.height : (iconImage && iconImage.status == Image.Ready ? iconImage.height : 0)
+	property int itemIconWidth: (root.icon && root.icon.width > 0) ? root.icon.width : (iconImage && iconImage.status == Image.Ready ? iconImage.width : 0)
+	property int itemIconHeight: (root.icon && root.icon.height > 0) ? root.icon.height : (iconImage && iconImage.status == Image.Ready ? iconImage.height : 0)
     
 	property int wrapMode: Text.Wrap
 	property int elide: Text.ElideNone
@@ -65,9 +65,9 @@ Button {
 
 			Image {
 				id: iconImage
-				width: root.icon.width
-				height: root.icon.height
-				source: root.icon.source
+				width: root.icon ? root.icon.width : 0
+				height: root.icon ? root.icon.height : 0
+				source: root.icon ? root.icon.source : ""
 				fillMode: Image.PreserveAspectFit
 				sourceSize.width: width
 				sourceSize.height: height
@@ -87,8 +87,8 @@ Button {
 				source: iconImage
 				anchors.fill: iconImage
 				colorization: 1.0
-				colorizationColor: root.icon.color ? root.icon.color : Atmosphere.textColor
-				visible: (root.icon.color != "" && root.icon.color != undefined) || root.iconOverlay
+				colorizationColor: root.icon && root.icon.color ? root.icon.color : Atmosphere.textColor
+				visible: (root.icon && root.icon.color != "" && root.icon.color != undefined) || root.iconOverlay
 			}
 		}
 
