@@ -15,6 +15,8 @@ Button {
 	property CutieMenu menu
 	property string failedThemeIconName: ""
 	readonly property bool hasIcon: !!icon.name || !!icon.source
+	// icon.color defaults to transparent (an object, so it is always truthy in JS)
+	readonly property bool hasIconColor: icon.color.a > 0
 	readonly property real resolvedIconWidth: icon.width > 0 ? icon.width : 32
 	readonly property real resolvedIconHeight: icon.height > 0 ? icon.height : 32
 
@@ -82,8 +84,9 @@ Button {
 				anchors.fill: iconImage
 				source: iconImage
 				colorization: 1.0
-				colorizationColor: root.icon.color ? root.icon.color : Atmosphere.textColor
-				visible: root.icon.color || root.iconOverlay
+				colorizationColor: root.hasIconColor ? root.icon.color : Atmosphere.textColor
+				brightness: 1.0
+				visible: root.hasIconColor || root.iconOverlay
 			}
 		}
 
