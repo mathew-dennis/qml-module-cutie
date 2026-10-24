@@ -1,17 +1,15 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 import Cutie
 
 ListView {
     id: root
-    // build delegates ahead of the viewport (incubated asynchronously)
-    cacheBuffer: Math.round(height / 2)
 	property CutieMenu menu
     property string floatIconName
     property url floatIconSource
     signal floatAction()
+    reuseItems: true
+    cacheBuffer: height > 0 ? Math.min(height / 2, 320) : 0
     footerPositioning: ListView.OverlayFooter
     footer: Item {
         height: visible ? 100 : 0

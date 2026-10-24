@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 import QtQuick.Effects
 import Cutie
 import Cutie.Feedback
@@ -10,40 +9,28 @@ Button {
 	width: parent.width
 	property string subText: ""
 	property bool iconOverlay: true
-	property int itemIconWidth: root.icon.width > 0 ? root.icon.width : (iconImage.status == Image.Ready ? iconImage.width : 0)
-	property int itemIconHeight: root.icon.height > 0 ? root.icon.height : (iconImage.status == Image.Ready ? iconImage.height : 0)
-    
 	property int wrapMode: Text.Wrap
 	property int elide: Text.ElideNone
 	property int maximumLineCount: -1
-    
 	property CutieMenu menu
+	property string failedThemeIconName: ""
+	readonly property bool hasIcon: !!icon.name || !!icon.source
+	readonly property real resolvedIconWidth: icon.width > 0 ? icon.width : 32
+	readonly property real resolvedIconHeight: icon.height > 0 ? icon.height : 32
+
 	padding: 15
 	bottomPadding: 10
 
-    onIconChanged: {
-        if (icon.name) {
-            iconImage.usingTheme = true;
-            iconImage.source = "image://icon/" + icon.name;
-        } else if (icon.source) {
-            iconImage.usingTheme = false;
-            iconImage.source = icon.source;
-        } else {
-            iconImage.usingTheme = false;
-            iconImage.source = "";
-        }
-    }
-
 	onPressAndHold: {
 		if (menu) {
-        	CutieFeedback.trigger(Application.name, "button-pressed", {}, -1);
+			CutieFeedback.trigger(Application.name, "button-pressed", {}, -1);
 			menu.open();
 		}
 	}
 
-    onClicked: {
-        CutieFeedback.trigger(Application.name, "button-pressed", {}, -1);
-    }
+	onClicked: {
+		CutieFeedback.trigger(Application.name, "button-pressed", {}, -1);
+	}
 
 	background: CutieTile {
 		anchors.fill: parent
@@ -54,58 +41,56 @@ Button {
 	}
 
 	contentItem: Item {
-		anchors.left: parent.left
-		anchors.right: parent.right
-		anchors.leftMargin: 20
-		anchors.rightMargin: 30
-		implicitHeight: Math.max(iconItem.height, textCol.height)
-		height: implicitHeight
+		implicitWidth: 20 + iconItem.width + (iconItem.visible ? 15 : 0)
+			+ textCol.implicitWidth + 30
+		implicitHeight: Math.max(iconItem.height, textCol.implicitHeight)
 
 		Item {
 			id: iconItem
-			width: root.itemIconWidth
-			height: root.itemIconHeight
+			visible: root.hasIcon
+			width: visible ? root.resolvedIconWidth : 0
+			height: visible ? root.resolvedIconHeight : 0
+			anchors.left: parent.left
+			anchors.leftMargin: 20
 			anchors.verticalCenter: parent.verticalCenter
 
 			Image {
 				id: iconImage
-				width: root.icon.width
-				height: root.icon.height
-				source: root.icon.source
+				anchors.fill: parent
+				property string themeIconUrl: root.icon.name
+					? "image://icon/" + root.icon.name : ""
+				source: themeIconUrl && root.failedThemeIconName !== root.icon.name
+					? themeIconUrl : root.icon.source
 				fillMode: Image.PreserveAspectFit
-				sourceSize.width: width
-				sourceSize.height: height
+				sourceSize: Qt.size(width, height)
 				asynchronous: true
-				visible: !tintLoader.active
-                property bool usingTheme: false
+				cache: root.icon.cache
+				visible: !iconEffect.visible
 
-                onStatusChanged: {
-                    if (status == Image.Error && usingTheme) {
-                        usingTheme = false;
-                        source = root.icon.source;
-                    }
-                }
+				onStatusChanged: {
+					if (status === Image.Error && themeIconUrl
+							&& source.toString() === themeIconUrl) {
+						root.failedThemeIconName = root.icon.name;
+					}
+				}
 			}
 
-			Loader {
-				id: tintLoader
+			MultiEffect {
+				id: iconEffect
 				anchors.fill: iconImage
-				active: iconImage.status === Image.Ready
-					&& ((root.icon.color != "" && root.icon.color != undefined) || root.iconOverlay)
-				sourceComponent: MultiEffect {
-					source: iconImage
-					anchors.fill: parent
-					colorization: 1.0
-					colorizationColor: root.icon.color ? root.icon.color : Atmosphere.textColor
-				}
+				source: iconImage
+				colorization: 1.0
+				colorizationColor: root.icon.color ? root.icon.color : Atmosphere.textColor
+				visible: root.icon.color || root.iconOverlay
 			}
 		}
 
 		Column {
 			id: textCol
 			anchors.left: iconItem.right
-			anchors.leftMargin: (iconImage.status == Image.Ready || iconImage.status == Image.Loading) ? 15 : 0
+			anchors.leftMargin: iconItem.visible ? 15 : 0
 			anchors.right: parent.right
+			anchors.rightMargin: 30
 			anchors.verticalCenter: parent.verticalCenter
 			spacing: subTextItem.visible ? 5 : 0
 
@@ -113,7 +98,7 @@ Button {
 				id: mainTextItem
 				text: root.text
 				font.pixelSize: 15
-				width: parent.width
+				width: textCol.width
 				wrapMode: root.wrapMode
 				elide: root.elide
 				maximumLineCount: root.maximumLineCount
@@ -124,7 +109,7 @@ Button {
 				text: root.subText
 				visible: root.subText !== ""
 				font.pixelSize: 10
-				width: parent.width
+				width: textCol.width
 				wrapMode: root.wrapMode
 				elide: root.elide
 				maximumLineCount: root.maximumLineCount
