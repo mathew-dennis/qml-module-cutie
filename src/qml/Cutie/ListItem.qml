@@ -53,19 +53,18 @@ Button {
 		opacity: highlighted || pressed ? 1.0 : 0.0
 	}
 
-	contentItem: Item {
+	contentItem: RowLayout {
+		spacing: (iconImage.status == Image.Ready || iconImage.status == Image.Loading) ? 15 : 0
 		anchors.left: parent.left
 		anchors.right: parent.right
 		anchors.leftMargin: 20
 		anchors.rightMargin: 30
-		implicitHeight: Math.max(iconItem.height, textCol.height)
-		height: implicitHeight
+		height: Math.max(iconItem.height, textCol.height)
 
 		Item {
 			id: iconItem
 			width: root.itemIconWidth
 			height: root.itemIconHeight
-			anchors.verticalCenter: parent.verticalCenter
 
 			Image {
 				id: iconImage
@@ -101,19 +100,16 @@ Button {
 			}
 		}
 
-		Column {
+		ColumnLayout {
 			id: textCol
-			anchors.left: iconItem.right
-			anchors.leftMargin: (iconImage.status == Image.Ready || iconImage.status == Image.Loading) ? 15 : 0
-			anchors.right: parent.right
-			anchors.verticalCenter: parent.verticalCenter
+        	Layout.fillWidth: true
 			spacing: subTextItem.visible ? 5 : 0
 
 			CutieLabel {
 				id: mainTextItem
 				text: root.text
 				font.pixelSize: 15
-				width: parent.width
+        		Layout.fillWidth: true
 				wrapMode: root.wrapMode
 				elide: root.elide
 				maximumLineCount: root.maximumLineCount
@@ -124,7 +120,7 @@ Button {
 				text: root.subText
 				visible: root.subText !== ""
 				font.pixelSize: 10
-				width: parent.width
+        		Layout.fillWidth: true
 				wrapMode: root.wrapMode
 				elide: root.elide
 				maximumLineCount: root.maximumLineCount
