@@ -6,6 +6,8 @@ import Cutie
 
 ListView {
     id: root
+    // build delegates ahead of the viewport (incubated asynchronously)
+    cacheBuffer: Math.round(height / 2)
 	property CutieMenu menu
     property string floatIconName
     property url floatIconSource

@@ -28,6 +28,9 @@ Button {
         } else if (icon.source) {
             iconImage.usingTheme = false;
             iconImage.source = icon.source;
+        } else {
+            iconImage.usingTheme = false;
+            iconImage.source = "";
         }
     }
 
@@ -51,7 +54,7 @@ Button {
 	}
 
 	contentItem: RowLayout {
-		spacing: iconImage.status == Image.Ready ? 15 : 0
+		spacing: (iconImage.status == Image.Ready || iconImage.status == Image.Loading) ? 15 : 0
 		anchors.left: parent.left
 		anchors.right: parent.right
 		anchors.leftMargin: 20
@@ -71,7 +74,8 @@ Button {
 				fillMode: Image.PreserveAspectFit
 				sourceSize.width: width
 				sourceSize.height: height
-				visible: false
+				asynchronous: true
+				visible: !tintLoader.active
                 property bool usingTheme: false
 
                 onStatusChanged: {
@@ -82,13 +86,17 @@ Button {
                 }
 			}
 
-			MultiEffect {
-				id: fastTint
-				source: iconImage
+			Loader {
+				id: tintLoader
 				anchors.fill: iconImage
-				colorization: 1.0
-				colorizationColor: root.icon.color ? root.icon.color : Atmosphere.textColor
-				visible: (root.icon.color != "" && root.icon.color != undefined) || root.iconOverlay
+				active: iconImage.status === Image.Ready
+					&& ((root.icon.color != "" && root.icon.color != undefined) || root.iconOverlay)
+				sourceComponent: MultiEffect {
+					source: iconImage
+					anchors.fill: parent
+					colorization: 1.0
+					colorizationColor: root.icon.color ? root.icon.color : Atmosphere.textColor
+				}
 			}
 		}
 
