@@ -20,6 +20,8 @@ Button {
 
 	padding: 15
 	bottomPadding: 10
+	leftPadding: 0
+	rightPadding: 0
 
 	onPressAndHold: {
 		if (menu) {
