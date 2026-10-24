@@ -17,6 +17,12 @@ Button {
 	readonly property bool hasIcon: !!icon.name || !!icon.source
 	// icon.color defaults to transparent (an object, so it is always truthy in JS)
 	readonly property bool hasIconColor: icon.color.a > 0
+	// only theme/file icons named "*-symbolic" are recoloured by default
+	readonly property bool isSymbolicIcon: {
+		const src = iconImage.source.toString();
+		return src.substring(src.lastIndexOf("/") + 1).indexOf("-symbolic") !== -1;
+	}
+	readonly property bool recolorIcon: hasIconColor || (iconOverlay && isSymbolicIcon)
 	readonly property real resolvedIconWidth: icon.width > 0 ? icon.width : 32
 	readonly property real resolvedIconHeight: icon.height > 0 ? icon.height : 32
 
@@ -86,7 +92,7 @@ Button {
 				colorization: 1.0
 				colorizationColor: root.hasIconColor ? root.icon.color : Atmosphere.textColor
 				brightness: 1.0
-				visible: root.hasIconColor || root.iconOverlay
+				visible: root.recolorIcon
 			}
 		}
 
