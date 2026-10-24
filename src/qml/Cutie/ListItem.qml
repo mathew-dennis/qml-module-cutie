@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 import Cutie
 import Cutie.Feedback
 
@@ -30,7 +29,6 @@ Button {
             iconImage.source = icon.source;
         }
     }
-
 
 	onPressAndHold: {
 		if (menu) {
@@ -70,7 +68,7 @@ Button {
 				fillMode: Image.PreserveAspectFit
 				sourceSize.width: width
 				sourceSize.height: height
-				visible: !colorOverlay.visible
+				visible: !fastTint.visible
                 property bool usingTheme: false
 
                 onStatusChanged: {
@@ -78,29 +76,38 @@ Button {
                         usingTheme = false;
                         source = root.icon.source;
                     }
-
-                    if (status == Image.Ready) {
-                        height = root.height - 10;
-                        width = height * root.icon.width / root.icon.height;
-                    }
                 }
-			}
+            }
 
-			ColorOverlay {
-				id: colorOverlay
-                source: iconImage
-                color: root.icon.color ? root.icon.color : Atmosphere.textColor
-                visible: root.icon.color || root.iconOverlay
-                width: Math.min(iconImage.width, root.icon.height)
-                height: Math.min(iconImage.height, root.icon.width)
+            ShaderEffect {
+                id: fastTint
+                width: Math.min(iconImage.width, root.icon.height > 0 ? root.icon.height : iconImage.height)
+                height: Math.min(iconImage.height, root.icon.width > 0 ? root.icon.width : iconImage.width)
                 anchors.verticalCenter: parent.verticalCenter
-			}
-		}
+                visible: (root.icon.color != "" && root.icon.color != undefined) || root.iconOverlay
+
+                property variant source: iconImage
+                property color tintColor: root.icon.color ? root.icon.color : Atmosphere.textColor
+
+                fragmentShader: "
+                    varying highp vec2 qt_TexCoord0;
+                    uniform sampler2D source;
+                    uniform highp vec4 tintColor;
+                    uniform highp float qt_Opacity;
+                    
+                    void main() {
+                        highp vec4 tex = texture2D(source, qt_TexCoord0);
+                        gl_FragColor = vec4(tintColor.rgb * tex.a, tex.a) * qt_Opacity;
+                    }
+                "
+            }
+        }
 
 		ColumnLayout {
 			id: textCol
         	Layout.fillWidth: true
 			spacing: subTextItem.visible ? 5 : 0
+
 			CutieLabel {
 				id: mainTextItem
 				text: root.text
@@ -110,6 +117,7 @@ Button {
 				elide: root.elide
 				maximumLineCount: root.maximumLineCount
 			}
+			
 			CutieLabel {
 				id: subTextItem
 				text: root.subText
