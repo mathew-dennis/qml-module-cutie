@@ -10,8 +10,8 @@ Button {
 	width: parent.width
 	property string subText: ""
 	property bool iconOverlay: true
-	property int itemIconWidth: root.icon.width > 0 ? root.icon.width : (iconImage.status == Image.Ready ? iconImage.width : 0)
-	property int itemIconHeight: root.icon.height > 0 ? root.icon.height : (iconImage.status == Image.Ready ? iconImage.height : 0)
+	property int itemIconWidth: root.icon.width > 0 ? root.icon.width : (iconImage && iconImage.status == Image.Ready ? iconImage.width : 0)
+	property int itemIconHeight: root.icon.height > 0 ? root.icon.height : (iconImage && iconImage.status == Image.Ready ? iconImage.height : 0)
     
 	property int wrapMode: Text.Wrap
 	property int elide: Text.ElideNone
@@ -51,7 +51,7 @@ Button {
 	}
 
 	contentItem: RowLayout {
-		spacing: iconImage.status == Image.Ready ? 15 : 0
+		spacing: iconImage && iconImage.status == Image.Ready ? 15 : 0
 		anchors.left: parent.left
 		anchors.right: parent.right
 		anchors.leftMargin: 20
