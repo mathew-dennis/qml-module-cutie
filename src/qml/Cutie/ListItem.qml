@@ -44,7 +44,7 @@ Button {
 
 	contentItem: Item {
 		implicitWidth: 20 + iconItem.width + (iconItem.visible ? 15 : 0)
-			+ textCol.implicitWidth + 30
+			+ textCol.implicitWidth + 20
 		implicitHeight: Math.max(iconItem.height, textCol.implicitHeight)
 
 		Item {
@@ -92,7 +92,7 @@ Button {
 			anchors.left: iconItem.right
 			anchors.leftMargin: iconItem.visible ? 15 : 0
 			anchors.right: parent.right
-			anchors.rightMargin: 30
+			anchors.rightMargin: 20
 			anchors.verticalCenter: parent.verticalCenter
 			spacing: subTextItem.visible ? 5 : 0
 
