@@ -9,7 +9,7 @@ ListView {
     property url floatIconSource
     signal floatAction()
     reuseItems: true
-    cacheBuffer: height > 0 ? Math.min(height / 2, 320) : 0
+    cacheBuffer: height > 0 ? Math.min(height / 2,  500) : 0
     footerPositioning: ListView.OverlayFooter
     footer: Item {
         height: visible ? 100 : 0
