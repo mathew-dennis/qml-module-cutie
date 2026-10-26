@@ -6,6 +6,7 @@ import Cutie.Feedback
 
 Button {
 	id: root
+	icon.color: "transparent"
 	width: parent.width
 	property string subText: ""
 	property bool iconOverlay: true
@@ -15,14 +16,8 @@ Button {
 	property CutieMenu menu
 	property string failedThemeIconName: ""
 	readonly property bool hasIcon: !!icon.name || !!icon.source
-	// icon.color defaults to transparent (an object, so it is always truthy in JS)
-	readonly property bool hasIconColor: icon.color.a > 0
-	// only theme/file icons named "*-symbolic" are recoloured by default
-	readonly property bool isSymbolicIcon: {
-		const src = iconImage.source.toString();
-		return src.substring(src.lastIndexOf("/") + 1).indexOf("-symbolic") !== -1;
-	}
-	readonly property bool recolorIcon: hasIconColor || (iconOverlay && isSymbolicIcon)
+	readonly property bool symbolicIcon: icon.name.toLowerCase().endsWith("-symbolic")
+	readonly property bool customIconColor: icon.color.a > 0
 	readonly property real resolvedIconWidth: icon.width > 0 ? icon.width : 32
 	readonly property real resolvedIconHeight: icon.height > 0 ? icon.height : 32
 
@@ -90,9 +85,10 @@ Button {
 				anchors.fill: iconImage
 				source: iconImage
 				colorization: 1.0
-				colorizationColor: root.hasIconColor ? root.icon.color : Atmosphere.textColor
-				brightness: 1.0
-				visible: root.recolorIcon
+				colorizationColor: root.customIconColor
+					? root.icon.color : Atmosphere.textColor
+				visible: root.symbolicIcon
+					&& (root.iconOverlay || root.customIconColor)
 			}
 		}
 
