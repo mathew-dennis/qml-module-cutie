@@ -10,13 +10,18 @@ Button {
 	width: parent.width
 	property string subText: ""
 	property bool iconOverlay: true
+	property bool forceSymbolicIcon: false
 	property int wrapMode: Text.Wrap
 	property int elide: Text.ElideNone
 	property int maximumLineCount: -1
 	property CutieMenu menu
 	property string failedThemeIconName: ""
 	readonly property bool hasIcon: !!icon.name || !!icon.source
-	readonly property bool symbolicIcon: icon.name.toLowerCase().endsWith("-symbolic")
+	readonly property string resolvedIconSource: iconImage.source.toString().toLowerCase()
+	readonly property bool symbolicIcon: forceSymbolicIcon
+		|| resolvedIconSource.indexOf("-symbolic") !== -1
+		|| resolvedIconSource.indexOf(".symbolic") !== -1
+		|| resolvedIconSource.indexOf("/symbolic/") !== -1
 	readonly property bool customIconColor: icon.color.a > 0
 	readonly property real resolvedIconWidth: icon.width > 0 ? icon.width : 32
 	readonly property real resolvedIconHeight: icon.height > 0 ? icon.height : 32
