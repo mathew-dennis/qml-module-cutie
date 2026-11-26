@@ -1,0 +1,461 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 53c8bcd..ce56818 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,18 +1,20 @@
+ cmake_minimum_required(VERSION 3.16)
+-project(qmlcutieplugin VERSION 1.0 LANGUAGES CXX)
++project(qmlcutieplugin VERSION 1.0 LANGUAGES C CXX)
+ 
+ set(CMAKE_INCLUDE_CURRENT_DIR ON)
+ 
+ find_package(PkgConfig REQUIRED)
+ find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core)
+-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Gui Qml Quick)
++find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Gui Qml Quick WaylandClient)
+ pkg_check_modules(ATMOSPHERE atmosphere REQUIRED IMPORTED_TARGET)
++pkg_check_modules(WAYLAND_CLIENT wayland-client REQUIRED IMPORTED_TARGET)
+ 
+ qt_standard_project_setup()
+ 
+ set(plugin_SOURCES
+     src/plugin.cpp src/plugin.h
+-    src/iconprovider.cpp src/iconprovider.h)
++    src/iconprovider.cpp src/iconprovider.h
++    src/backgroundblur.cpp src/backgroundblur.h)
+ 
+ qt6_add_qml_module(qmlcutieplugin
+     URI Cutie
+@@ -23,6 +25,11 @@
+         ${plugin_SOURCES}
+ )
+ 
++qt6_generate_wayland_protocol_client_sources(qmlcutieplugin
++    FILES
++        ${CMAKE_CURRENT_SOURCE_DIR}/src/protocols/ext-background-effect-v1.xml
++)
++
+ target_include_directories(qmlcutieplugin PUBLIC
+     src
+ )
+@@ -30,9 +37,12 @@
+ target_link_libraries(qmlcutieplugin PUBLIC
+     Qt::Core
+     Qt::Gui
++    Qt::GuiPrivate
+     Qt::Qml
+     Qt::Quick
++    Qt::WaylandClient
+     PkgConfig::ATMOSPHERE
++    PkgConfig::WAYLAND_CLIENT
+ )
+ 
+ install(TARGETS qmlcutieplugin
+diff --git a/debian/control b/debian/control
+index 576fd4f..5468f6d 100644
+--- a/debian/control
++++ b/debian/control
+@@ -6,6 +6,10 @@
+                cmake,
+                libgles-dev,
+                qt6-base-dev,
++               qt6-base-private-dev,
++               qt6-wayland,
++               qt6-wayland-dev,
++               libwayland-dev,
+                pkg-config,
+                qt6-declarative-dev,
+                libatmosphere-dev,
+diff --git a/src/plugin.cpp b/src/plugin.cpp
+index c152741..430fe14 100644
+--- a/src/plugin.cpp
++++ b/src/plugin.cpp
+@@ -1,14 +1,19 @@
+ #include "plugin.h"
++#include "backgroundblur.h"
+ 
+ void CutiePlugin::registerTypes(const char *uri)
+ {
+ 	qmlRegisterSingletonType<AtmosphereModel>(uri, 1, 0, "Atmosphere",
+ 						  &AtmosphereModel::provider);
++	qmlRegisterType<BackgroundBlur>(uri, 1, 0, "BackgroundBlur");
+ }
+ 
+ void CutiePlugin::initializeEngine(QQmlEngine *engine, const char *uri)
+ {
+ 	Q_UNUSED(uri);
++	// Ensure CutieWindow gets an RGBA surface even if it starts opaque
++	// before Wayland blur capabilities arrive.
++	QQuickWindow::setDefaultAlphaBuffer(true);
+ 	QIcon::setThemeName(
+ 		qEnvironmentVariable("CUTIE_ICON_THEME", "cutie"));
+ 	engine->addImageProvider("icon", &iconProvider);
+diff --git a/src/qml/Cutie/Window.qml b/src/qml/Cutie/Window.qml
+index 792a91e..c5e3f1b 100644
+--- a/src/qml/Cutie/Window.qml
++++ b/src/qml/Cutie/Window.qml
+@@ -4,12 +4,20 @@
+ import Cutie
+ 
+ Window {
++    id: root
+     visible: true
+     readonly property bool isFullScreen: visibility === Window.FullScreen
+     readonly property bool isMaximized: visibility === Window.Maximized
+     readonly property bool isWindowed: visibility === Window.Windowed
+ 
+-    color: isWindowed ?  "black" : "transparent" 
++    readonly property bool _needsBackground: isWindowed || wideLayout
++    color: (_needsBackground && !_backgroundBlur.blurred) ? "black" : "transparent"
++
++    BackgroundBlur {
++        id: _backgroundBlur
++        window: root
++        enabled: root._needsBackground
++    }
+ 
+     property Item initialPage: null
+     property Item firstChildPage: null
+diff --git a/src/backgroundblur.h b/src/backgroundblur.h
+new file mode 100644
+index 0000000..5608a8c
+--- /dev/null
++++ b/src/backgroundblur.h
+@@ -0,0 +1,61 @@
++#pragma once
++
++#include <QPointer>
++#include <QWindow>
++#include <QtWaylandClient/QWaylandClientExtensionTemplate>
++
++#include "qwayland-ext-background-effect-v1.h"
++
++struct wl_surface;
++
++class BackgroundBlur
++	: public QWaylandClientExtensionTemplate<BackgroundBlur>,
++	  public QtWayland::ext_background_effect_manager_v1 {
++	Q_OBJECT
++	Q_PROPERTY(QWindow *window READ window WRITE setWindow NOTIFY
++			   windowChanged)
++	Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY
++			   enabledChanged)
++	Q_PROPERTY(bool blurred READ isBlurred NOTIFY blurredChanged)
++    public:
++	BackgroundBlur();
++	~BackgroundBlur() override;
++
++	QWindow *window() const
++	{
++		return m_window;
++	}
++	void setWindow(QWindow *window);
++
++	bool enabled() const
++	{
++		return m_enabled;
++	}
++	void setEnabled(bool enabled);
++
++	bool isBlurred() const
++	{
++		return m_enabled && isActive() &&
++		       (m_capabilities & capability_blur);
++	}
++
++    signals:
++	void windowChanged();
++	void enabledChanged();
++	void blurredChanged();
++
++    protected:
++	void
++	ext_background_effect_manager_v1_capabilities(uint32_t flags) override;
++	bool eventFilter(QObject *watched, QEvent *event) override;
++
++    private:
++	void sync();
++	void clearEffect();
++
++	QPointer<QWindow> m_window;
++	bool m_enabled = false;
++	uint32_t m_capabilities = 0;
++	struct ::wl_surface *m_surface = nullptr;
++	struct ::ext_background_effect_surface_v1 *m_effect = nullptr;
++};
+diff --git a/src/backgroundblur.cpp b/src/backgroundblur.cpp
+new file mode 100644
+index 0000000..720ff54
+--- /dev/null
++++ b/src/backgroundblur.cpp
+@@ -0,0 +1,135 @@
++#include "backgroundblur.h"
++
++#include <QEvent>
++#include <QGuiApplication>
++#include <QPlatformSurfaceEvent>
++#include <qpa/qplatformnativeinterface.h>
++#include <wayland-client.h>
++
++// Large enough to cover any window without resending regions on resize; the
++// compositor clips the blur region to the surface size per the protocol spec.
++static const int MAX_EXTENT = 100000;
++
++BackgroundBlur::BackgroundBlur()
++	: QWaylandClientExtensionTemplate<BackgroundBlur>(1)
++{
++	connect(this, &QWaylandClientExtension::activeChanged, this, [this]() {
++		if (!isActive() && (m_capabilities & capability_blur)) {
++			m_capabilities = 0;
++			if (m_enabled)
++				emit blurredChanged();
++		}
++		sync();
++	});
++}
++
++BackgroundBlur::~BackgroundBlur()
++{
++	if (m_window)
++		m_window->removeEventFilter(this);
++	clearEffect();
++	if (isInitialized())
++		destroy();
++}
++
++void BackgroundBlur::setWindow(QWindow *window)
++{
++	if (m_window == window)
++		return;
++	if (m_window) {
++		m_window->removeEventFilter(this);
++		clearEffect();
++	}
++	m_window = window;
++	if (m_window)
++		m_window->installEventFilter(this);
++	emit windowChanged();
++	sync();
++}
++
++void BackgroundBlur::setEnabled(bool enabled)
++{
++	if (m_enabled == enabled)
++		return;
++	const bool was = isBlurred();
++	m_enabled = enabled;
++	emit enabledChanged();
++	if (was != isBlurred())
++		emit blurredChanged();
++	sync();
++}
++
++void BackgroundBlur::ext_background_effect_manager_v1_capabilities(
++	uint32_t flags)
++{
++	const bool was = isBlurred();
++	m_capabilities = flags;
++	if (was != isBlurred())
++		emit blurredChanged();
++	sync();
++}
++
++bool BackgroundBlur::eventFilter(QObject *watched, QEvent *event)
++{
++	if (watched == m_window) {
++		if (event->type() == QEvent::PlatformSurface) {
++			auto *e = static_cast<QPlatformSurfaceEvent *>(event);
++			if (e->surfaceEventType() ==
++			    QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed)
++				clearEffect();
++			else
++				sync();
++		} else if (event->type() == QEvent::Expose) {
++			sync();
++		}
++	}
++	return QObject::eventFilter(watched, event);
++}
++
++void BackgroundBlur::clearEffect()
++{
++	if (m_effect) {
++		ext_background_effect_surface_v1_destroy(m_effect);
++		m_effect = nullptr;
++	}
++	m_surface = nullptr;
++}
++
++void BackgroundBlur::sync()
++{
++	if (!m_window || !m_window->handle() || !isBlurred()) {
++		const bool hadEffect = m_effect != nullptr;
++		clearEffect();
++		if (hadEffect && m_window && m_window->isExposed())
++			m_window->requestUpdate();
++		return;
++	}
++
++	QPlatformNativeInterface *native =
++		QGuiApplication::platformNativeInterface();
++	if (!native)
++		return;
++
++	auto *surface = static_cast<struct ::wl_surface *>(
++		native->nativeResourceForWindow("surface", m_window));
++	auto *compositor = static_cast<struct ::wl_compositor *>(
++		native->nativeResourceForIntegration("compositor"));
++	if (!surface || !compositor) {
++		clearEffect();
++		return;
++	}
++
++	if (m_surface == surface && m_effect)
++		return;
++
++	clearEffect();
++	m_surface = surface;
++	m_effect = get_background_effect(surface);
++
++	struct ::wl_region *region = wl_compositor_create_region(compositor);
++	wl_region_add(region, 0, 0, MAX_EXTENT, MAX_EXTENT);
++	ext_background_effect_surface_v1_set_blur_region(m_effect, region);
++	wl_region_destroy(region);
++
++	m_window->requestUpdate();
++}
+diff --git a/src/protocols/ext-background-effect-v1.xml b/src/protocols/ext-background-effect-v1.xml
+new file mode 100644
+index 0000000..fa6d711
+--- /dev/null
++++ b/src/protocols/ext-background-effect-v1.xml
+@@ -0,0 +1,129 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<protocol name="ext_background_effect_v1">
++  <copyright>
++    Copyright (C) 2015 Martin Gräßlin
++    Copyright (C) 2015 Marco Martin
++    Copyright (C) 2020 Vlad Zahorodnii
++    Copyright (C) 2024 Xaver Hugl
++
++    Permission is hereby granted, free of charge, to any person obtaining a
++    copy of this software and associated documentation files (the "Software"),
++    to deal in the Software without restriction, including without limitation
++    the rights to use, copy, modify, merge, publish, distribute, sublicense,
++    and/or sell copies of the Software, and to permit persons to whom the
++    Software is furnished to do so, subject to the following conditions:
++
++    The above copyright notice and this permission notice (including the next
++    paragraph) shall be included in all copies or substantial portions of the
++    Software.
++
++    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++    DEALINGS IN THE SOFTWARE.
++  </copyright>
++
++  <interface name="ext_background_effect_manager_v1" version="1">
++    <description summary="background effect factory">
++      This protocol provides a way to improve visuals of translucent surfaces
++      by applying effects like blur to the background behind them.
++
++      The capabilities are send when the global is bound, and every time they
++      change. Note that when the capability goes away, the corresponding effect
++      is no longer applied by the compositor, even if it was set before.
++
++      Warning! The protocol described in this file is currently in the testing
++      phase. Backward compatible changes may be added together with the
++      corresponding interface version bump. Backward incompatible changes can
++      only be done by creating a new major version of the extension.
++    </description>
++
++    <request name="destroy" type="destructor">
++      <description summary="destroy the background effect manager">
++        Informs the server that the client will no longer be using this
++        protocol object. Existing objects created by this object are not
++        affected.
++      </description>
++    </request>
++
++    <enum name="error">
++      <entry name="background_effect_exists" value="0"
++             summary="the surface already has a background effect object"/>
++    </enum>
++
++    <enum name="capability" bitfield="true">
++      <entry name="blur" value="1"
++             summary="the compositor supports applying blur"/>
++    </enum>
++
++    <event name="capabilities">
++      <description summary="capabilities of the compositor"/>
++      <arg name="flags" type="uint" enum="capability"/>
++    </event>
++
++    <request name="get_background_effect">
++      <description summary="get a background effects object">
++        Instantiate an interface extension for the given wl_surface to add
++        effects like blur for the background behind it.
++
++        If the given wl_surface already has a ext_background_effect_surface_v1
++        object associated, the background_effect_exists protocol error will be
++        raised.
++      </description>
++      <arg name="id" type="new_id" interface="ext_background_effect_surface_v1"
++           summary="the new ext_background_effect_surface_v1 object"/>
++      <arg name="surface" type="object" interface="wl_surface"
++           summary="the surface"/>
++    </request>
++  </interface>
++
++  <interface name="ext_background_effect_surface_v1" version="1">
++    <description summary="background effects for a surface">
++      The background effect object provides a way to specify a region behind
++      a surface that should have background effects like blur applied.
++
++      If the wl_surface associated with the ext_background_effect_surface_v1
++      object has been destroyed, this object becomes inert.
++    </description>
++
++    <request name="destroy" type="destructor">
++      <description summary="release the blur object">
++        Informs the server that the client will no longer be using this protocol
++        object. The effect regions will be removed on the next commit.
++      </description>
++    </request>
++
++    <enum name="error">
++      <entry name="surface_destroyed" value="0"
++             summary="the associated surface has been destroyed"/>
++    </enum>
++
++    <request name="set_blur_region">
++      <description summary="set blur region">
++        This request sets the region of the surface that will have its
++        background blurred.
++
++        The blur region is specified in the surface-local coordinates, and
++        clipped by the compositor to the surface size.
++
++        The initial value for the blur region is empty. Setting the pending
++        blur region has copy semantics, and the wl_region object can be
++        destroyed immediately. A NULL wl_region removes the effect.
++
++        The blur region is double-buffered state, and will be applied on
++        the next wl_surface.commit.
++
++        The blur algorithm is subject to compositor policies.
++
++        If the associated surface has been destroyed, the surface_destroyed
++        error will be raised.
++      </description>
++      <arg name="region" type="object" interface="wl_region" allow-null="true"
++           summary="blur region of the surface"/>
++    </request>
++
++  </interface>
++</protocol>

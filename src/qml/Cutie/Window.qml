@@ -4,12 +4,20 @@ import QtQuick.Window
 import Cutie
 
 Window {
+    id: root
     visible: true
     readonly property bool isFullScreen: visibility === Window.FullScreen
     readonly property bool isMaximized: visibility === Window.Maximized
     readonly property bool isWindowed: visibility === Window.Windowed
 
-    color: isWindowed ?  "black" : "transparent" 
+    readonly property bool _needsBackground: isWindowed || wideLayout
+    color: (_needsBackground && !_backgroundBlur.blurred) ? "black" : "transparent"
+
+    BackgroundBlur {
+        id: _backgroundBlur
+        window: root
+        enabled: root._needsBackground
+    }
 
     property Item initialPage: null
     property Item firstChildPage: null
